@@ -10,6 +10,7 @@ type ProductPopupProps = {
 
 export function ProductPopup({ data, onClose }: ProductPopupProps) {
   const navigate = useNavigate()
+  const isCompact = data.compact === true
 
   useEffect(() => {
     const previous = document.body.style.overflow
@@ -27,7 +28,9 @@ export function ProductPopup({ data, onClose }: ProductPopupProps) {
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 md:p-8" role="dialog" aria-modal="true">
       <button type="button" className="absolute inset-0 bg-navy-deep/55" aria-label="Close popup" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-[1080px] bg-white shadow-2xl grid md:grid-cols-2 overflow-hidden max-h-[90vh]">
+      <div
+        className={`product-popup relative z-10 w-full bg-white shadow-2xl overflow-hidden ${isCompact ? 'product-popup--compact max-w-[820px]' : 'max-w-[1080px]'}`}
+      >
         <button
           type="button"
           onClick={onClose}
@@ -36,11 +39,19 @@ export function ProductPopup({ data, onClose }: ProductPopupProps) {
         >
           <X size={22} />
         </button>
-        <div className="p-8 md:p-12 flex flex-col justify-center overflow-y-auto">
-          {data.script ? (
+        <div className="product-popup__content p-8 md:p-10 flex flex-col justify-center overflow-y-auto">
+          {!isCompact && data.script ? (
             <p className="font-display italic text-[42px] md:text-[56px] leading-none text-navy mb-2">{data.script}</p>
           ) : null}
-          <h2 className="text-[28px] md:text-[36px] font-light text-navy leading-tight mb-5">{data.title}</h2>
+          <h2
+            className={
+              isCompact
+                ? 'text-[24px] md:text-[28px] font-light text-navy leading-tight mb-4'
+                : 'text-[28px] md:text-[36px] font-light text-navy leading-tight mb-5'
+            }
+          >
+            {data.title}
+          </h2>
           <p className="text-[#4a4a4a] text-[15px] leading-relaxed mb-8">{data.description}</p>
           <div className="flex flex-wrap items-center gap-4">
             <button
@@ -56,8 +67,11 @@ export function ProductPopup({ data, onClose }: ProductPopupProps) {
             <span className="text-sm text-muted">{data.terms ?? 'Terms & Conditions apply.'}</span>
           </div>
         </div>
-        <div className="hidden md:block min-h-[420px]">
-          <img src={data.image} alt="" className="w-full h-full object-cover object-center" />
+        <div
+          className="product-popup__media hidden md:block"
+          style={{ ['--popup-image-position' as string]: data.imagePosition ?? 'center' }}
+        >
+          <img src={data.image} alt="" className="product-popup__image" />
         </div>
       </div>
     </div>

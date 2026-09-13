@@ -27,7 +27,7 @@ export function Placeholder() {
     <main className="bg-sky min-h-[50vh]">
       <div className="container-tw py-16">
         <p className="body-3 text-muted mb-3">
-          <Link to="/" className="text-primary">
+          <Link to="/personal" className="text-primary">
             Home
           </Link>{' '}
           / {title}
@@ -47,9 +47,6 @@ export function Placeholder() {
           <ActionButton className="border border-navy text-navy font-bold px-6 py-3 rounded" popup={productPopups.home}>
             Instant Apply
           </ActionButton>
-          <Link to="/login" className="bg-navy text-white font-bold px-6 py-3 rounded">
-            Login
-          </Link>
         </div>
       </div>
     </main>

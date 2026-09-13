@@ -34,10 +34,12 @@ export function MainNavigation({
         <Logo
           variant={premier ? 'premier' : 'blue'}
           className={`transition-all duration-300 ${
-            compact ? (premier ? 'w-[140px] max-h-[30px]' : 'w-[96px]') : premier ? 'w-[168px] max-h-[36px]' : 'w-[118px]'
+            premier ? 'ml-6 lg:ml-10 ' : ''
+          }${
+            compact ? (premier ? 'w-[112px] max-h-[24px]' : 'w-[96px]') : premier ? 'w-[132px] max-h-[28px]' : 'w-[118px]'
           }`}
         />
-        <ul className={`flex items-center ${premier ? 'flex-1 justify-evenly min-w-0 ml-2' : compact ? '-ml-6' : 'ml-0'}`}>
+        <ul className={`flex items-center ${premier ? 'flex-1 justify-start gap-1 lg:gap-3 min-w-0 ml-10 lg:ml-16' : compact ? '-ml-6' : 'ml-0'}`}>
           <RegionSelector
             open={openMenu === 'country'}
             onToggle={() => onToggleMenu('country')}
@@ -93,7 +95,7 @@ export function MainNavigation({
             </ActionButton>
           </>
         ) : null}
-        <LoginButton open={openMenu === 'login'} onToggle={() => onToggleMenu('login')} premier={premier} />
+        <LoginButton premier={premier} />
       </div>
     </div>
   )

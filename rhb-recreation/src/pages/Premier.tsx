@@ -6,7 +6,6 @@ import { MultiCurrencyCardSection } from '../components/Premier/MultiCurrencyCar
 import { OverseasPropertySection } from '../components/Premier/OverseasPropertySection'
 import { PremierCTA } from '../components/Premier/PremierCTA'
 import { PremierFeatureGrid } from '../components/Premier/PremierFeatureGrid'
-import { PremierFloat } from '../components/Premier/PremierFloat'
 import { PremierHero } from '../components/Premier/PremierHero'
 import { PrivilegeSection } from '../components/Premier/PrivilegeSection'
 import { RegionalBankingSection } from '../components/Premier/RegionalBankingSection'
@@ -26,7 +25,6 @@ export function Premier() {
 
   return (
     <main>
-      <PremierFloat />
       <PremierHero />
       <PremierFeatureGrid />
       <WealthManagementSection />

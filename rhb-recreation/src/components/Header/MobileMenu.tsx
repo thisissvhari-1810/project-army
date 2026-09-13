@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, User } from 'lucide-react'
+import { ChevronRight, User } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -11,6 +11,8 @@ import {
   premierUtilityLinks,
   utilityLinks,
 } from '../../data/navigation'
+import { usePopup } from '../../context/PopupContext'
+import { getUtilitySecurityPopup, premierAccessOnlyNotice, premierLoginNotice } from '../../data/popups'
 import { Logo } from '../common/Logo'
 
 type MobileMenuProps = {
@@ -27,9 +29,10 @@ export function MobileMenu({
   loginOpen,
   premier = false,
   onToggleMenu,
-  onToggleLogin,
+  onToggleLogin: _onToggleLogin,
   onSearch,
 }: MobileMenuProps) {
+  const { openProduct } = usePopup()
   const [panel, setPanel] = useState<'root' | 'about' | 'country'>('root')
   const iconClass = premier ? 'text-white' : 'text-navy'
   const pageLinks = premier ? premierNavLinks : mainNavLinks
@@ -38,7 +41,7 @@ export function MobileMenu({
   return (
     <div className="lg:hidden">
       <div
-        className={`${premier ? 'bg-[#002353]' : 'bg-header'} w-full h-[60px] flex justify-between items-center fixed top-0 z-50 px-4`}
+        className={`${premier ? 'bg-premier' : 'bg-header'} w-full h-[60px] flex justify-between items-center fixed top-0 z-50 px-4`}
       >
         <button
           type="button"
@@ -54,26 +57,40 @@ export function MobileMenu({
           <span />
           <span />
         </button>
-        <Logo variant={premier ? 'premier' : 'blue'} className={premier ? 'w-[120px] max-h-[28px]' : 'w-[88px]'} />
+        <Logo variant={premier ? 'premier' : 'blue'} className={premier ? 'w-[96px] max-h-[22px]' : 'w-[88px]'} />
         <div className="flex items-center gap-3">
           {!premier ? (
             <button type="button" onClick={onSearch} aria-label="Open search" className="header-search">
               <i className="fa fa-search" aria-hidden="true" />
             </button>
           ) : null}
-          <button type="button" onClick={onToggleLogin} className={`flex items-center ${iconClass}`} aria-label="Login">
-            <User size={20} />
-            <ChevronDown size={14} className={`ml-1 transition-transform ${loginOpen ? 'rotate-180' : ''}`} />
-          </button>
+          {premier ? (
+            <Link
+              to="/login?premier=true"
+              className={`flex items-center ${iconClass}`}
+              aria-label="Login"
+            >
+              <User size={20} />
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => openProduct(premierLoginNotice)}
+              className={`flex items-center ${iconClass}`}
+              aria-label="Login"
+            >
+              <User size={20} />
+            </button>
+          )}
         </div>
       </div>
 
-      {loginOpen ? (
+      {loginOpen && premier ? (
         <div className="fixed inset-x-0 top-[60px] z-40 bg-white shadow-lg">
           {loginLinks.map((item) => (
             <Link
               key={item.id}
-              to={item.href}
+              to="/login?premier=true"
               className="px-4 py-4 block text-primary body-3 text-right font-bold border-b border-gray-5"
             >
               {item.text} <ChevronRight size={14} className="inline" />
@@ -88,11 +105,22 @@ export function MobileMenu({
         {panel === 'root' ? (
           <nav className="flex flex-col">
             {!premier
-              ? audienceLinks.map((item) => (
-                  <Link key={item.id} to={item.href} className="px-5 py-4 border-b border-gray-5 body-2 text-navy font-bold">
-                    {item.text}
-                  </Link>
-                ))
+              ? audienceLinks.map((item) =>
+                  item.id === 'personal' || item.id === 'premier' ? (
+                    <Link key={item.id} to={item.href} className="px-5 py-4 border-b border-gray-5 body-2 text-navy font-bold">
+                      {item.text}
+                    </Link>
+                  ) : (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className="px-5 py-4 border-b border-gray-5 body-2 text-navy font-bold w-full text-left bg-transparent"
+                      onClick={() => openProduct(premierAccessOnlyNotice)}
+                    >
+                      {item.text}
+                    </button>
+                  ),
+                )
               : null}
             <button
               type="button"
@@ -119,9 +147,14 @@ export function MobileMenu({
               </Link>
             ) : null}
             {utilities.map((item) => (
-              <Link key={item.id} to={item.href} className="px-5 py-4 border-b border-gray-5 body-2 text-primary">
+              <button
+                key={item.id}
+                type="button"
+                className="px-5 py-4 border-b border-gray-5 body-2 text-primary w-full text-left bg-transparent"
+                onClick={() => openProduct(getUtilitySecurityPopup(item.id))}
+              >
                 {item.text}
-              </Link>
+              </button>
             ))}
           </nav>
         ) : (

@@ -1,5 +1,4 @@
 import { useLocation } from 'react-router-dom'
-import { ActionButton } from './ActionButton'
 
 export function FloatingCta() {
   const { pathname } = useLocation()
@@ -12,18 +11,14 @@ export function FloatingCta() {
   if (!showJoy) return null
 
   return (
-    <ActionButton
-      popup="joy"
-      className="global--floatingcta"
-      aria-label="Enjoy exclusive benefits with RHB Joy@Work"
-    >
+    <div className="global--floatingcta" aria-hidden="true">
       <img
         src="https://www.rhbgroup.com/-/media/Assets/Corporate-Website/Images/Overview/overview-personal-banking/floatbar-model-happy-smile.png"
         className="modelimg"
-        alt="floatbar model happy smile"
+        alt=""
       />
       Enjoy exclusive benefits with
       <span>RHB Joy@Work</span>
-    </ActionButton>
+    </div>
   )
 }

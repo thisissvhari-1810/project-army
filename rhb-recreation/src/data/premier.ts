@@ -55,7 +55,7 @@ export const premierImages = {
   eligibilityAum: `${media}/icon-investment.png`,
   eligibilityHybrid: `${media}/icon-facility.png`,
   eligibilityJoy: `${media}/icon-joyatwork.png`,
-  floatLogo: `${media}/logo-premier_default.png`,
+  floatLogo: '/assets/logos/rhb-premier-logo.png',
 }
 
 export const premierHeroSlides = [

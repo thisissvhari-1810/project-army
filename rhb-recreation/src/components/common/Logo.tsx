@@ -7,10 +7,10 @@ type LogoProps = {
 }
 
 const sources = {
-  blue: { src: '/assets/logos/rhb-official.png', alt: 'RHB', to: '/' },
-  white: { src: '/assets/logos/logo-white.svg', alt: 'RHB', to: '/' },
+  blue: { src: '/assets/logos/rhb-official.png', alt: 'RHB', to: '/personal' },
+  white: { src: '/assets/logos/logo-white.svg', alt: 'RHB', to: '/personal' },
   premier: {
-    src: '/assets/logos/logo-premier.png',
+    src: '/assets/logos/rhb-premier-logo.png',
     alt: 'RHB Premier',
     to: '/premier',
   },

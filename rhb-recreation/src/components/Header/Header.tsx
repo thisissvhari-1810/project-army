@@ -61,7 +61,7 @@ export function Header() {
             </div>
             <div
               id="desktop-header-bluebar"
-              className={`w-full z-20 transition-all duration-300 ease-in-out ${isPremier ? 'bg-[#002353]' : 'bg-primary-light'}`}
+              className={`w-full z-20 transition-all duration-300 ease-in-out ${isPremier ? 'bg-premier' : 'bg-primary-light'}`}
               style={{ height: compact ? 60 : 80 }}
             >
               <div className={`${isPremier ? 'header-premier-wrap' : 'container-tw'} h-full`}>

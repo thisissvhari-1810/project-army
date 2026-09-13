@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 248 48" role="img" aria-label="RHB Premier">
+  <text x="0" y="34" fill="#002353" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="800" letter-spacing="-1.2">RHB</text>
+  <path fill="#002353" d="M88 24 L96 16 L104 24 L96 32 Z"/>
+  <text x="110" y="35" fill="#002353" font-family="Georgia, 'Times New Roman', serif" font-size="26" font-style="italic">Premier</text>
+</svg>

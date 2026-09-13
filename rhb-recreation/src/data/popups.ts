@@ -4,6 +4,8 @@ export type ProductPopupData = {
   title: string
   description: string
   image: string
+  imagePosition?: string
+  compact?: boolean
   ctaLabel?: string
   href?: string
   terms?: string
@@ -19,6 +21,70 @@ export const campaignPopup: ProductPopupData = {
   ctaLabel: 'Find Out More',
   href: '/premier#privileges',
   terms: 'Terms & Conditions apply.',
+}
+
+export const premierLoginNotice: ProductPopupData = {
+  id: 'premier-login-required',
+  script: 'Premier',
+  title: 'login is available to Premier customers.',
+  description:
+    'Online login access is reserved for RHB Premier customers. Visit the Premier page to learn about its banking and wealth-management privileges.',
+  image: '/assets/images/visa-lounge.jpg',
+  ctaLabel: 'Explore RHB Premier',
+  href: '/premier',
+  terms: 'Terms & Conditions apply.',
+}
+
+export const premierAccessOnlyNotice: ProductPopupData = {
+  id: 'premier-access-only',
+  script: 'Welcome',
+  title: 'Premier User, you have only access for the Premier page.',
+  description:
+    'Welcome Premier User. Only the Premier section is available for your account. Please use the Premier page to continue.',
+  image: '/assets/images/privileges-travel.jpg',
+  ctaLabel: 'Go to Premier',
+  href: '/premier',
+  terms: 'Terms & Conditions apply.',
+}
+
+export const utilitySecurityPopups: Record<string, ProductPopupData> = {
+  contact: {
+    id: 'premier-security-contact',
+    title: 'Premier customers do not have access to Contact.',
+    description:
+      'Due to your security level, Premier customers do not have access to Contact. Please use the Premier page for available services.',
+    image: '/assets/products/promo-card.jpg',
+    imagePosition: 'center center',
+    compact: true,
+    ctaLabel: 'Close',
+    terms: 'Terms & Conditions apply.',
+  },
+  locate: {
+    id: 'premier-security-locate',
+    title: 'Premier customers do not have access to Locate.',
+    description:
+      'Due to your security level, Premier customers do not have access to Locate. Please use the Premier page for available services.',
+    image: '/assets/banners/hero-invest.jpg',
+    imagePosition: 'center center',
+    compact: true,
+    ctaLabel: 'Close',
+    terms: 'Terms & Conditions apply.',
+  },
+  faq: {
+    id: 'premier-security-faq',
+    title: 'Premier customers do not have access to FAQ.',
+    description:
+      'Due to your security level, Premier customers do not have access to FAQ. Please use the Premier page for available services.',
+    image: '/assets/products/promo-calc.jpg',
+    imagePosition: 'center top',
+    compact: true,
+    ctaLabel: 'Close',
+    terms: 'Terms & Conditions apply.',
+  },
+}
+
+export function getUtilitySecurityPopup(id: string): ProductPopupData {
+  return utilitySecurityPopups[id] ?? utilitySecurityPopups.contact
 }
 
 export const productPopups: Record<string, ProductPopupData> = {

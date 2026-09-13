@@ -58,7 +58,7 @@ export const footerColumns: FooterColumn[] = [
   },
   {
     title: 'RHB Group',
-    href: '/',
+    href: '/personal',
     links: [
       { text: 'About RHB', href: '/about/who-we-are' },
       { text: 'Career', href: '/placeholder/career' },
