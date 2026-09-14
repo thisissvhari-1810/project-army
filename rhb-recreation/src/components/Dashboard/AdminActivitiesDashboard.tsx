@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   AlertTriangle,
   Download,
@@ -11,20 +11,14 @@ import {
   Clock,
   UserRound,
 } from 'lucide-react'
-import { useAuth } from '../../context/AuthContext'
-import { formatDateTime } from '../../lib/bankingStorage'
+import { fetchAuditLogs } from '../../lib/api/banking'
+import { useBankingData } from '../../hooks/useBankingData'
+import { formatDateTime } from '../../lib/format'
+import { exportAuditCsv } from '../../lib/exportAudit'
 import { formatDuration, formatLocation, formatLocationSource } from '../../lib/deviceInfo'
 import { FailedLoginMobileCards, SessionMobileCards } from './AdminActivityMobileCards'
 import { LoginPhotoCell } from './LoginPhotoCell'
-import {
-  exportAuditCsv,
-  getAlertsForUser,
-  getAuditEventsForUser,
-  getFailedLoginsForUser,
-  getSessionsForUser,
-  loadAuditData,
-} from '../../lib/auditStorage'
-import type { AuditEvent, AuditSession, UserPresence } from '../../types/audit'
+import type { AuditData, AuditEvent, AuditSession, UserPresence } from '../../types/audit'
 
 const PAGE_LABELS: Record<string, string> = {
   '/dashboard': 'Account Overview',
@@ -48,36 +42,35 @@ function presenceLabel(status: UserPresence) {
 }
 
 export function AdminActivitiesDashboard() {
-  const { getCustomerUsers, refreshKey } = useAuth()
-  const users = getCustomerUsers()
-  const [selectedUserId, setSelectedUserId] = useState(users[0]?.id ?? '')
+  const { users } = useBankingData()
+  const customers = users.filter((user) => user.role === 'user')
+  const [selectedUserId, setSelectedUserId] = useState('')
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [severityFilter, setSeverityFilter] = useState('all')
+  const [audit, setAudit] = useState<AuditData>({ events: [], sessions: [], failedLogins: [], alerts: [] })
+  const [loading, setLoading] = useState(true)
 
-  const selectedUser = users.find((user) => user.id === selectedUserId)
+  const selectedUser = customers.find((user) => user.id === selectedUserId)
 
-  const audit = useMemo(() => loadAuditData(), [refreshKey, selectedUserId])
+  useEffect(() => {
+    setLoading(true)
+    void fetchAuditLogs(selectedUserId || undefined)
+      .then((result) => {
+        setAudit({
+          events: result.events,
+          sessions: result.sessions,
+          failedLogins: result.failedLogins,
+          alerts: result.alerts,
+        })
+      })
+      .finally(() => setLoading(false))
+  }, [selectedUserId])
 
-  const events = useMemo(
-    () => (selectedUserId ? getAuditEventsForUser(selectedUserId) : audit.events),
-    [audit.events, selectedUserId, refreshKey],
-  )
-
-  const sessions = useMemo(
-    () => (selectedUserId ? getSessionsForUser(selectedUserId) : audit.sessions),
-    [audit.sessions, selectedUserId, refreshKey],
-  )
-
-  const failedLogins = useMemo(
-    () => (selectedUser ? getFailedLoginsForUser(selectedUser.username) : audit.failedLogins),
-    [audit.failedLogins, selectedUser, refreshKey],
-  )
-
-  const alerts = useMemo(
-    () => (selectedUserId ? getAlertsForUser(selectedUserId) : audit.alerts),
-    [audit.alerts, selectedUserId, refreshKey],
-  )
+  const events = audit.events
+  const sessions = audit.sessions
+  const failedLogins = audit.failedLogins
+  const alerts = audit.alerts
 
   const filteredEvents = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -142,7 +135,7 @@ export function AdminActivitiesDashboard() {
               onChange={(event) => setSelectedUserId(event.target.value)}
             >
               <option value="">All users</option>
-              {users.map((user) => (
+              {customers.map((user) => (
                 <option key={user.id} value={user.id}>
                   {user.displayName} (@{user.username})
                 </option>
@@ -167,6 +160,8 @@ export function AdminActivitiesDashboard() {
           configurable retention. Only legitimate application activity is recorded.
         </p>
       </div>
+
+      {loading ? <p className="text-muted text-sm">Loading audit data…</p> : null}
 
       <div className="admin-activities__stats">
         <article className="admin-activities__stat">

@@ -2,12 +2,12 @@ import { useState } from 'react'
 import { Eye, EyeOff, ShieldCheck } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useBalanceVisibility } from '../../hooks/useBalanceVisibility'
-import { formatCurrency } from '../../lib/bankingStorage'
-import type { BankUser } from '../../types/banking'
+import { formatCurrency } from '../../lib/format'
+import type { PublicUser } from '../../types/banking'
 import { BalancePinSheet } from './BalancePinSheet'
 
 type AccountSummaryCardProps = {
-  user: BankUser
+  user: PublicUser
 }
 
 export function AccountSummaryCard({ user }: AccountSummaryCardProps) {
@@ -53,7 +53,7 @@ export function AccountSummaryCard({ user }: AccountSummaryCardProps) {
             </div>
 
             {visible ? (
-              <p className="gpay-balance-card__amount">{formatCurrency(user.balance)}</p>
+              <p className="gpay-balance-card__amount">{formatCurrency(user.balance ?? 0)}</p>
             ) : (
               <div className="gpay-balance-card__hidden">
                 <p className="gpay-balance-card__masked">$ ••••••</p>

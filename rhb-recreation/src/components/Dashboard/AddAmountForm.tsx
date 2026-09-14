@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { useBankingData } from '../../hooks/useBankingData'
-import { formatCurrency } from '../../lib/bankingStorage'
+import { formatCurrency } from '../../lib/format'
 
 export function AddAmountForm() {
   const { adjustAmount } = useAuth()
@@ -13,6 +13,7 @@ export function AddAmountForm() {
   const [description, setDescription] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   const selectedUser = users.find((user) => user.id === userId)
   const activeUserId = userId || users[0]?.id || ''
@@ -33,22 +34,22 @@ export function AddAmountForm() {
         event.preventDefault()
         setMessage('')
         setError('')
+        setSubmitting(true)
 
-        const result = adjustAmount({
+        void adjustAmount({
           userId: activeUserId,
           amount: Number(amount),
           type,
           description,
-        })
-
-        if (!result.ok) {
-          setError(result.error)
-          return
-        }
-
-        setMessage('Transaction posted successfully.')
-        setAmount('')
-        setDescription('')
+        }).then((result) => {
+          if (!result.ok) {
+            setError(result.error)
+            return
+          }
+          setMessage('Transaction posted successfully.')
+          setAmount('')
+          setDescription('')
+        }).finally(() => setSubmitting(false))
       }}
     >
       <div>
@@ -62,7 +63,7 @@ export function AddAmountForm() {
           <select required value={activeUserId} onChange={(event) => setUserId(event.target.value)}>
             {users.map((user) => (
               <option key={user.id} value={user.id}>
-                {user.displayName} ({user.username}) — {formatCurrency(user.balance)}
+                {user.displayName} ({user.username}) — {formatCurrency(user.balance ?? 0)}
               </option>
             ))}
           </select>
@@ -98,15 +99,16 @@ export function AddAmountForm() {
 
       {selectedUser ? (
         <p className="text-sm text-muted">
-          Current balance: <span className="text-navy font-bold">{formatCurrency(selectedUser.balance)}</span>
+          Current balance:{' '}
+          <span className="text-navy font-bold">{formatCurrency(selectedUser.balance ?? 0)}</span>
         </p>
       ) : null}
 
       {error ? <p className="text-accent text-sm font-bold">{error}</p> : null}
       {message ? <p className="text-primary text-sm font-bold">{message}</p> : null}
 
-      <button type="submit" className="btn-primary text-white font-bold px-6 py-3 rounded">
-        Post transaction
+      <button type="submit" disabled={submitting} className="btn-primary text-white font-bold px-6 py-3 rounded">
+        {submitting ? 'Posting…' : 'Post transaction'}
       </button>
     </form>
   )

@@ -1,4 +1,4 @@
-import { formatDateTime } from '../../lib/bankingStorage'
+import { formatDateTime } from '../../lib/format'
 import type { Activity } from '../../types/banking'
 
 type ActivityListProps = {

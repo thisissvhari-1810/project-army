@@ -5,7 +5,7 @@ import { TransactionTable } from '../../components/Dashboard/TransactionTable'
 import { useAuth } from '../../context/AuthContext'
 import { useBalanceVisibility, maskCurrency } from '../../hooks/useBalanceVisibility'
 import { useBankingData } from '../../hooks/useBankingData'
-import { formatCurrency } from '../../lib/bankingStorage'
+import { formatCurrency } from '../../lib/format'
 
 export function UserDashboardOverview() {
   const { session } = useAuth()
@@ -63,7 +63,7 @@ export function UserDashboardOverview() {
           <div>
             <p className="dashboard-premier-stat__label">Current balance</p>
             <p className="dashboard-premier-stat__value">
-              {maskCurrency(formatCurrency(user.balance), balanceVisible)}
+              {maskCurrency(formatCurrency(user.balance ?? 0), balanceVisible)}
             </p>
           </div>
         </article>

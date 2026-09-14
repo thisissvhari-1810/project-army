@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
-import { BALANCE_VIEW_PIN } from '../../lib/accessCodes'
+import { verifyBalancePin } from '../../lib/api/banking'
+import { ApiError } from '../../lib/api/client'
 
 type BalancePinSheetProps = {
   open: boolean
@@ -14,37 +15,42 @@ export function BalancePinSheet({ open, onClose, onSuccess }: BalancePinSheetPro
   const [pin, setPin] = useState('')
   const [error, setError] = useState('')
   const [shake, setShake] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     if (!open) {
       setPin('')
       setError('')
       setShake(false)
+      setSubmitting(false)
     }
   }, [open])
 
   useEffect(() => {
-    if (pin.length !== PIN_LENGTH) return
+    if (pin.length !== PIN_LENGTH || submitting) return
 
-    if (pin === BALANCE_VIEW_PIN) {
-      setError('')
-      onSuccess()
-      onClose()
-      return
-    }
-
-    setError('Incorrect PIN')
-    setShake(true)
-    window.setTimeout(() => {
-      setPin('')
-      setShake(false)
-    }, 450)
-  }, [pin, onClose, onSuccess])
+    setSubmitting(true)
+    void verifyBalancePin(pin)
+      .then(() => {
+        setError('')
+        onSuccess()
+        onClose()
+      })
+      .catch((err) => {
+        setError(err instanceof ApiError ? err.message : 'Incorrect PIN')
+        setShake(true)
+        window.setTimeout(() => {
+          setPin('')
+          setShake(false)
+          setSubmitting(false)
+        }, 450)
+      })
+  }, [pin, onClose, onSuccess, submitting])
 
   if (!open) return null
 
   const appendDigit = (digit: string) => {
-    if (pin.length >= PIN_LENGTH) return
+    if (pin.length >= PIN_LENGTH || submitting) return
     setError('')
     setPin((value) => `${value}${digit}`)
   }
@@ -88,6 +94,7 @@ export function BalancePinSheet({ open, onClose, onSuccess }: BalancePinSheetPro
                   type="button"
                   className="gpay-keypad__key is-action"
                   onClick={removeDigit}
+                  disabled={submitting}
                 >
                   ⌫
                 </button>
@@ -100,6 +107,7 @@ export function BalancePinSheet({ open, onClose, onSuccess }: BalancePinSheetPro
                 type="button"
                 className="gpay-keypad__key"
                 onClick={() => appendDigit(key)}
+                disabled={submitting}
               >
                 {key}
               </button>

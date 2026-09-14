@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { formatDateTime } from '../../lib/bankingStorage'
+import { formatDateTime } from '../../lib/format'
 import { formatDuration, formatLocation, formatLocationSource } from '../../lib/deviceInfo'
 import type { AuditSession, FailedLoginAttempt, UserPresence } from '../../types/audit'
 import { LoginPhotoCell } from './LoginPhotoCell'

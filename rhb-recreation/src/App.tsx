@@ -62,13 +62,12 @@ function BankingSessionManager() {
     prevPathRef.current = pathname
 
     if (isBankingRoute(prevPath) && pathname === '/login' && session) {
-      logout()
-      navigate('/premier', { replace: true })
+      void logout().then(() => navigate('/premier', { replace: true }))
       return
     }
 
     if (session && !isBankingRoute(pathname) && pathname !== '/login') {
-      logout()
+      void logout()
     }
   }, [pathname, session, logout, navigate])
 

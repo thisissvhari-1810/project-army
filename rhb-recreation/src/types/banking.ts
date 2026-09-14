@@ -1,12 +1,11 @@
 export type UserRole = 'admin' | 'user'
 
-export type BankUser = {
+export type PublicUser = {
   id: string
   username: string
-  password: string
   displayName: string
   role: UserRole
-  balance: number
+  balance: number | null
   accountNumber: string
   createdAt: string
 }
@@ -26,28 +25,13 @@ export type Transaction = {
   createdAt: string
 }
 
-export type Activity = {
-  id: string
-  userId: string
-  username: string
-  action: string
-  details: string
-  createdAt: string
-}
-
 export type AuthSession = {
   userId: string
   username: string
   displayName: string
   role: UserRole
   sessionId: string
-}
-
-export type BankingData = {
-  users: BankUser[]
-  transactions: Transaction[]
-  activities: Activity[]
-  updatedAt?: string
+  accountNumber?: string
 }
 
 export type NewUserInput = {
@@ -62,4 +46,13 @@ export type AddAmountInput = {
   amount: number
   type: TransactionType
   description: string
+}
+
+export type Activity = {
+  id: string
+  userId: string
+  username: string
+  action: string
+  details: string
+  createdAt: string
 }

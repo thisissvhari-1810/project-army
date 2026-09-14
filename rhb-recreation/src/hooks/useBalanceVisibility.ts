@@ -1,36 +1,31 @@
 import { useCallback, useEffect, useState } from 'react'
-import {
-  clearBalanceVisibility,
-  isBalanceVisibleNow,
-  setBalanceVisibleFor,
-} from '../lib/accessCodes'
-
-const AUTO_HIDE_MS = 60000
+import { apiRequest } from '../lib/api/client'
+import { fetchBalanceVisibility } from '../lib/api/banking'
 
 export function useBalanceVisibility() {
-  const [visible, setVisible] = useState(() => isBalanceVisibleNow())
+  const [visible, setVisible] = useState(false)
+
+  const refresh = useCallback(() => {
+    void fetchBalanceVisibility()
+      .then((result) => setVisible(result.visible))
+      .catch(() => setVisible(false))
+  }, [])
 
   useEffect(() => {
-    const tick = () => {
-      setVisible(isBalanceVisibleNow())
-    }
-
-    tick()
-    const interval = window.setInterval(tick, 1000)
+    refresh()
+    const interval = window.setInterval(refresh, 5000)
     return () => window.clearInterval(interval)
-  }, [])
+  }, [refresh])
 
   const reveal = useCallback(() => {
-    setBalanceVisibleFor(AUTO_HIDE_MS)
-    setVisible(true)
-  }, [])
+    refresh()
+  }, [refresh])
 
   const hide = useCallback(() => {
-    clearBalanceVisibility()
-    setVisible(false)
-  }, [])
+    void apiRequest('/api/balance/hide', { method: 'POST' }).finally(refresh)
+  }, [refresh])
 
-  return { visible, reveal, hide }
+  return { visible, refresh, reveal, hide }
 }
 
 export function maskCurrency(value: string, visible: boolean) {

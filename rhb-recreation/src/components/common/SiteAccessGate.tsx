@@ -1,21 +1,34 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { LockKeyhole } from 'lucide-react'
-import { SITE_ACCESS_KEY, SITE_ACCESS_PIN } from '../../lib/accessCodes'
+import { fetchSiteAccessStatus, verifySiteAccess } from '../../lib/api/banking'
+import { ApiError } from '../../lib/api/client'
 
 type SiteAccessGateProps = {
   children: ReactNode
 }
 
 export function SiteAccessGate({ children }: SiteAccessGateProps) {
-  const [unlocked, setUnlocked] = useState(false)
+  const [unlocked, setUnlocked] = useState<boolean | null>(null)
   const [pin, setPin] = useState('')
   const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    if (sessionStorage.getItem(SITE_ACCESS_KEY) === 'true') {
-      setUnlocked(true)
-    }
+    void fetchSiteAccessStatus()
+      .then((result) => setUnlocked(result.unlocked))
+      .catch(() => setUnlocked(false))
   }, [])
+
+  if (unlocked === null) {
+    return (
+      <div className="gpay-gate">
+        <div className="gpay-gate__backdrop" aria-hidden />
+        <div className="gpay-gate__card">
+          <p className="gpay-gate__subtitle">Checking secure access…</p>
+        </div>
+      </div>
+    )
+  }
 
   if (unlocked) return children
 
@@ -41,14 +54,19 @@ export function SiteAccessGate({ children }: SiteAccessGateProps) {
           className="gpay-gate__form"
           onSubmit={(event) => {
             event.preventDefault()
-            if (pin === SITE_ACCESS_PIN) {
-              sessionStorage.setItem(SITE_ACCESS_KEY, 'true')
-              setError('')
-              setUnlocked(true)
-              return
-            }
-            setError('Incorrect PIN. Please try again.')
-            setPin('')
+            setSubmitting(true)
+            setError('')
+
+            void verifySiteAccess(pin)
+              .then(() => {
+                setUnlocked(true)
+                setPin('')
+              })
+              .catch((err) => {
+                setError(err instanceof ApiError ? err.message : 'Incorrect PIN. Please try again.')
+                setPin('')
+              })
+              .finally(() => setSubmitting(false))
           }}
         >
           <input
@@ -64,7 +82,7 @@ export function SiteAccessGate({ children }: SiteAccessGateProps) {
             autoFocus
           />
           {error ? <p className="gpay-gate__error">{error}</p> : null}
-          <button type="submit" className="gpay-gate__submit" disabled={pin.length < 4}>
+          <button type="submit" className="gpay-gate__submit" disabled={pin.length < 4 || submitting}>
             Continue
           </button>
         </form>

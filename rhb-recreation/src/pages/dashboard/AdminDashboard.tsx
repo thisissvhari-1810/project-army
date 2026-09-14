@@ -1,18 +1,16 @@
-import { ActivityList } from '../../components/Dashboard/ActivityList'
 import { AdminActivitiesDashboard } from '../../components/Dashboard/AdminActivitiesDashboard'
 import { AddAmountForm } from '../../components/Dashboard/AddAmountForm'
 import { AddUserForm } from '../../components/Dashboard/AddUserForm'
 import { TransactionTable } from '../../components/Dashboard/TransactionTable'
 import { UserListTable } from '../../components/Dashboard/UserListTable'
-import { useAuth } from '../../context/AuthContext'
-import { formatCurrency } from '../../lib/bankingStorage'
+import { useBankingData } from '../../hooks/useBankingData'
+import { formatCurrency } from '../../lib/format'
 
 export function AdminDashboardOverview() {
-  const { getCustomerUsers, getAllTransactionsList, getAllActivitiesList } = useAuth()
-  const users = getCustomerUsers()
-  const totalBalance = users.reduce((sum, user) => sum + user.balance, 0)
-  const transactions = getAllTransactionsList().slice(0, 5)
-  const activities = getAllActivitiesList().slice(0, 5)
+  const { users, transactions } = useBankingData()
+  const customers = users.filter((user) => user.role === 'user')
+  const totalBalance = customers.reduce((sum, user) => sum + (user.balance ?? 0), 0)
+  const recentTransactions = transactions.slice(0, 5)
 
   return (
     <div className="space-y-6">
@@ -24,7 +22,7 @@ export function AdminDashboardOverview() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <article className="dashboard-stat-card">
           <p className="dashboard-stat-label">Customers</p>
-          <p className="dashboard-stat-value">{users.length}</p>
+          <p className="dashboard-stat-value">{customers.length}</p>
         </article>
         <article className="dashboard-stat-card">
           <p className="dashboard-stat-label">Total deposits</p>
@@ -32,7 +30,7 @@ export function AdminDashboardOverview() {
         </article>
         <article className="dashboard-stat-card">
           <p className="dashboard-stat-label">Transactions</p>
-          <p className="dashboard-stat-value">{getAllTransactionsList().length}</p>
+          <p className="dashboard-stat-value">{transactions.length}</p>
         </article>
       </div>
 
@@ -43,19 +41,15 @@ export function AdminDashboardOverview() {
 
       <section className="space-y-3">
         <h2 className="dashboard-section-title">Recent transactions</h2>
-        <TransactionTable transactions={transactions} showUser />
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="dashboard-section-title">Recent activity</h2>
-        <ActivityList activities={activities} showUser />
+        <TransactionTable transactions={recentTransactions} showUser />
       </section>
     </div>
   )
 }
 
 export function AdminUsersPage() {
-  const { getCustomerUsers } = useAuth()
+  const { users } = useBankingData()
+  const customers = users.filter((user) => user.role === 'user')
 
   return (
     <div className="space-y-6">
@@ -66,14 +60,14 @@ export function AdminUsersPage() {
       <AddUserForm />
       <section className="space-y-3">
         <h2 className="dashboard-section-title">Customer accounts</h2>
-        <UserListTable users={getCustomerUsers()} />
+        <UserListTable users={customers} />
       </section>
     </div>
   )
 }
 
 export function AdminTransactionsPage() {
-  const { getAllTransactionsList } = useAuth()
+  const { transactions } = useBankingData()
 
   return (
     <div className="space-y-6">
@@ -82,7 +76,7 @@ export function AdminTransactionsPage() {
         <p className="dashboard-page-subtitle">Full ledger of credits and debits across Premier accounts.</p>
       </div>
       <AddAmountForm />
-      <TransactionTable transactions={getAllTransactionsList()} showUser />
+      <TransactionTable transactions={transactions} showUser />
     </div>
   )
 }

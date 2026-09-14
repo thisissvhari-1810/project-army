@@ -1,8 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { getClientContext } from '../lib/deviceInfo'
-import { logPageVisit, updateSessionPresence } from '../lib/auditStorage'
+import { trackActivity } from '../lib/api/banking'
 
 const IDLE_MS = 5 * 60 * 1000
 
@@ -18,7 +17,7 @@ export function useActivityTracker() {
 
     const onActivity = () => {
       lastActiveAt.current = Date.now()
-      updateSessionPresence(session.sessionId, 'active')
+      void trackActivity({ type: 'presence', status: 'active' })
     }
 
     window.addEventListener('mousemove', onActivity)
@@ -28,7 +27,10 @@ export function useActivityTracker() {
 
     const idleTimer = window.setInterval(() => {
       const idleFor = Date.now() - lastActiveAt.current
-      updateSessionPresence(session.sessionId, idleFor >= IDLE_MS ? 'idle' : 'active')
+      void trackActivity({
+        type: 'presence',
+        status: idleFor >= IDLE_MS ? 'idle' : 'active',
+      })
     }, 30000)
 
     return () => {
@@ -47,8 +49,7 @@ export function useActivityTracker() {
       if (lastPath.current === pathname) return
       const durationMs = Date.now() - pageEnteredAt.current
       if (durationMs > 500 && (lastPath.current.startsWith('/dashboard') || lastPath.current.startsWith('/admin'))) {
-        const context = await getClientContext()
-        logPageVisit(session, lastPath.current, durationMs, context)
+        await trackActivity({ page: lastPath.current, durationMs })
       }
       lastPath.current = pathname
       pageEnteredAt.current = Date.now()
@@ -63,7 +64,7 @@ export function useActivityTracker() {
     return () => {
       const durationMs = Date.now() - pageEnteredAt.current
       if (durationMs > 500 && (pathname.startsWith('/dashboard') || pathname.startsWith('/admin'))) {
-        void getClientContext().then((context) => logPageVisit(session, pathname, durationMs, context))
+        void trackActivity({ page: pathname, durationMs })
       }
     }
   }, [pathname, session])

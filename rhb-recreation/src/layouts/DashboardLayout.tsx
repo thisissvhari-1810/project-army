@@ -1,7 +1,6 @@
 import { LogOut } from 'lucide-react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { ActivityTracker } from '../components/Dashboard/ActivityTracker'
-import { BankingSyncManager } from '../components/Dashboard/BankingSyncManager'
 import { useAuth } from '../context/AuthContext'
 import type { UserRole } from '../types/banking'
 
@@ -41,7 +40,6 @@ export function DashboardLayout({ role }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-sky flex flex-col">
       <ActivityTracker />
-      <BankingSyncManager active />
       <header className="dashboard-topbar bg-premier text-white shadow-md">
         <div className="header-premier-wrap flex items-center justify-between gap-4">
           <div className="dashboard-topbar__brand flex items-center gap-5 min-w-0">

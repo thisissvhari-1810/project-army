@@ -1,8 +1,8 @@
-import { formatCurrency, formatDateTime } from '../../lib/bankingStorage'
-import type { BankUser } from '../../types/banking'
+import { formatCurrency, formatDateTime } from '../../lib/format'
+import type { PublicUser } from '../../types/banking'
 
 type UserListTableProps = {
-  users: BankUser[]
+  users: PublicUser[]
 }
 
 export function UserListTable({ users }: UserListTableProps) {
@@ -33,7 +33,7 @@ export function UserListTable({ users }: UserListTableProps) {
                 <td className="font-bold text-navy">{user.displayName}</td>
                 <td>{user.username}</td>
                 <td>{user.accountNumber}</td>
-                <td className="text-right font-bold text-primary">{formatCurrency(user.balance)}</td>
+                <td className="text-right font-bold text-primary">{formatCurrency(user.balance ?? 0)}</td>
                 <td className="whitespace-nowrap">{formatDateTime(user.createdAt)}</td>
               </tr>
             ))}

@@ -9,6 +9,7 @@ export function AddUserForm() {
   const [initialBalance, setInitialBalance] = useState('0')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   return (
     <form
@@ -17,24 +18,24 @@ export function AddUserForm() {
         event.preventDefault()
         setMessage('')
         setError('')
+        setSubmitting(true)
 
-        const result = createUser({
+        void createUser({
           username,
           password,
           displayName,
           initialBalance: Number(initialBalance) || 0,
-        })
-
-        if (!result.ok) {
-          setError(result.error)
-          return
-        }
-
-        setMessage(`Premier account created for ${result.user.displayName}.`)
-        setUsername('')
-        setPassword('')
-        setDisplayName('')
-        setInitialBalance('0')
+        }).then((result) => {
+          if (!result.ok) {
+            setError(result.error)
+            return
+          }
+          setMessage(`Premier account created for ${result.user.displayName}.`)
+          setUsername('')
+          setPassword('')
+          setDisplayName('')
+          setInitialBalance('0')
+        }).finally(() => setSubmitting(false))
       }}
     >
       <div>
@@ -49,7 +50,13 @@ export function AddUserForm() {
         </label>
         <label className="dashboard-field">
           <span>Password</span>
-          <input required type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
+          <input
+            required
+            type="password"
+            minLength={8}
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+          />
         </label>
         <label className="dashboard-field md:col-span-2">
           <span>Full name</span>
@@ -71,8 +78,8 @@ export function AddUserForm() {
       {error ? <p className="text-accent text-sm font-bold">{error}</p> : null}
       {message ? <p className="text-primary text-sm font-bold">{message}</p> : null}
 
-      <button type="submit" className="btn-primary text-white font-bold px-6 py-3 rounded">
-        Create account
+      <button type="submit" disabled={submitting} className="btn-primary text-white font-bold px-6 py-3 rounded">
+        {submitting ? 'Creating…' : 'Create account'}
       </button>
     </form>
   )

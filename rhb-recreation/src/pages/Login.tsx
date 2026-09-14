@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { validateCredentials } from '../lib/bankingStorage'
+import { precheckLogin } from '../lib/api/banking'
 import { clearClientContextCache, getLoginClientContext } from '../lib/deviceInfo'
 import { captureLoginPhoto, startLoginCamera, stopLoginCamera } from '../lib/loginPhoto'
 
@@ -62,7 +62,7 @@ export function Login() {
     const trimmedUsername = username.trim()
     const trimmedPassword = password.trim()
     const context = await getLoginClientContext()
-    const result = login(trimmedUsername, trimmedPassword, { ...context, loginPhoto })
+    const result = await login(trimmedUsername, trimmedPassword, { ...context, loginPhoto })
 
     if (!result.ok) {
       setError(result.error)
@@ -103,24 +103,19 @@ export function Login() {
               void (async () => {
                 const trimmedUsername = username.trim()
                 const trimmedPassword = password.trim()
-                const validated = validateCredentials(trimmedUsername, trimmedPassword)
 
-                if (!validated) {
-                  const context = await getLoginClientContext()
-                  login(trimmedUsername, trimmedPassword, context)
+                try {
+                  const precheck = await precheckLogin(trimmedUsername, trimmedPassword)
+                  if (precheck.role === 'admin') {
+                    await completeLogin()
+                    return
+                  }
+                  setStep('photo')
+                } catch {
                   setError('Invalid username or password.')
+                } finally {
                   setLoading(false)
-                  return
                 }
-
-                if (validated.role === 'admin') {
-                  await completeLogin()
-                  setLoading(false)
-                  return
-                }
-
-                setStep('photo')
-                setLoading(false)
               })()
             }}
           >

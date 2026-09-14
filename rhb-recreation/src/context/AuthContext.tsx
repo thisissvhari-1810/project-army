@@ -1,189 +1,134 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { useLocation } from 'react-router-dom'
 import {
-  endAuditSession,
-  getActiveSessionId,
-  logFailedLogin,
-  logUserAction,
-  startAuditSession,
-} from '../lib/auditStorage'
-import { clearClientContextCache, getClientContext, getLoginClientContext } from '../lib/deviceInfo'
-import { syncBankingFromRemote } from '../lib/bankingSync'
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react'
 import {
-  addAmount as addAmountStorage,
-  addUser as addUserStorage,
-  authenticate,
-  getActivitiesForUser,
-  getAllActivities,
-  getAllTransactions,
-  getTransactionsForUser,
-  getUserById,
-  getUsers,
-  loadSession,
-  logoutSession,
-  subscribeBankingUpdates,
-} from '../lib/bankingStorage'
-import type { AddAmountInput, AuthSession, BankUser, NewUserInput } from '../types/banking'
+  createUserRequest,
+  fetchSession,
+  loginRequest,
+  logoutRequest,
+  postAdminTransaction,
+} from '../lib/api/banking'
+import { resetCsrfToken } from '../lib/api/client'
+import type { AddAmountInput, AuthSession, NewUserInput, PublicUser } from '../types/banking'
 
 type AuthContextValue = {
   session: AuthSession | null
+  loading: boolean
   login: (
     username: string,
     password: string,
-    context?: Awaited<ReturnType<typeof getClientContext>>,
-  ) => { ok: true; session: AuthSession } | { ok: false; error: string }
-  logout: () => void
+    context?: Record<string, unknown>,
+  ) => Promise<{ ok: true; session: AuthSession } | { ok: false; error: string }>
+  logout: () => Promise<void>
   refreshKey: number
   refresh: () => void
-  getCurrentUser: () => BankUser | undefined
-  getCustomerUsers: () => BankUser[]
-  getUserTransactions: (userId: string) => ReturnType<typeof getTransactionsForUser>
-  getAllTransactionsList: () => ReturnType<typeof getAllTransactions>
-  getUserActivities: (userId: string) => ReturnType<typeof getActivitiesForUser>
-  getAllActivitiesList: () => ReturnType<typeof getAllActivities>
-  createUser: (input: NewUserInput) => ReturnType<typeof addUserStorage>
-  adjustAmount: (input: AddAmountInput) => ReturnType<typeof addAmountStorage>
+  createUser: (
+    input: NewUserInput,
+  ) => Promise<{ ok: true; user: PublicUser } | { ok: false; error: string }>
+  adjustAmount: (
+    input: AddAmountInput,
+  ) => Promise<{ ok: true } | { ok: false; error: string }>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-function readActiveSession(): AuthSession | null {
-  const path = window.location.pathname
-  const onBankingRoute = path.startsWith('/dashboard') || path.startsWith('/admin')
-  if (!onBankingRoute) {
-    logoutSession()
-    return null
-  }
-  return loadSession()
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { pathname } = useLocation()
-  const [session, setSession] = useState<AuthSession | null>(() => readActiveSession())
+  const [session, setSession] = useState<AuthSession | null>(null)
+  const [loading, setLoading] = useState(true)
   const [refreshKey, setRefreshKey] = useState(0)
 
   const refresh = useCallback(() => setRefreshKey((value) => value + 1), [])
 
   useEffect(() => {
-    const onBankingRoute = pathname.startsWith('/dashboard') || pathname.startsWith('/admin')
-    if (!onBankingRoute) return
-    const stored = loadSession()
-    if (stored) setSession(stored)
-  }, [pathname])
-
-  useEffect(() => {
-    return subscribeBankingUpdates(refresh)
-  }, [refresh])
-
-  useEffect(() => {
-    const onBankingRoute = pathname.startsWith('/dashboard') || pathname.startsWith('/admin')
-    if (!onBankingRoute) return
-
-    const syncBanking = () => {
-      void syncBankingFromRemote().then((changed) => {
-        if (changed) refresh()
+    let active = true
+    void fetchSession()
+      .then((result) => {
+        if (active) setSession(result.session)
       })
-    }
-
-    syncBanking()
-
-    const onVisible = () => {
-      if (document.visibilityState === 'visible') syncBanking()
-    }
-
-    const onPageShow = () => syncBanking()
-
-    window.addEventListener('focus', syncBanking)
-    document.addEventListener('visibilitychange', onVisible)
-    window.addEventListener('pageshow', onPageShow)
-    const interval = window.setInterval(syncBanking, 3000)
+      .catch(() => {
+        if (active) setSession(null)
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
 
     return () => {
-      window.removeEventListener('focus', syncBanking)
-      document.removeEventListener('visibilitychange', onVisible)
-      window.removeEventListener('pageshow', onPageShow)
-      window.clearInterval(interval)
+      active = false
     }
-  }, [pathname, refresh])
+  }, [refreshKey])
 
-  const login = useCallback((username: string, password: string, context?: Awaited<ReturnType<typeof getClientContext>>) => {
-    const nextSession = authenticate(username.trim(), password)
-    if (!nextSession) {
-      void (context ? Promise.resolve(context) : getLoginClientContext()).then((resolved) =>
-        logFailedLogin(username.trim(), 'Invalid username or password.', resolved),
-      )
-      return { ok: false as const, error: 'Invalid username or password.' }
-    }
-
-    void (context ? Promise.resolve(context) : getLoginClientContext()).then((resolved) => {
-      const previousSessionId = getActiveSessionId()
-      if (previousSessionId && previousSessionId !== nextSession.sessionId) {
-        endAuditSession(previousSessionId, resolved)
+  const login = useCallback(async (username: string, password: string, context?: Record<string, unknown>) => {
+    try {
+      const result = await loginRequest({
+        username,
+        password,
+        loginPhoto: context?.loginPhoto as string | undefined,
+        clientContext: context,
+      })
+      setSession(result.session)
+      refresh()
+      return { ok: true as const, session: result.session }
+    } catch (error) {
+      return {
+        ok: false as const,
+        error: error instanceof Error ? error.message : 'Login failed.',
       }
-      startAuditSession(nextSession, resolved)
-    })
-    setSession(nextSession)
-    refresh()
-    return { ok: true as const, session: nextSession }
+    }
   }, [refresh])
 
-  const logout = useCallback(() => {
-    const current = session ?? loadSession()
-    if (current?.sessionId) {
-      void getClientContext().then((context) => endAuditSession(current.sessionId, context))
+  const logout = useCallback(async () => {
+    try {
+      await logoutRequest()
+    } finally {
+      resetCsrfToken()
+      setSession(null)
     }
-    logoutSession()
-    clearClientContextCache()
-    setSession(null)
-  }, [session])
+  }, [])
+
+  const createUser = useCallback(async (input: NewUserInput) => {
+    try {
+      const result = await createUserRequest(input)
+      refresh()
+      return { ok: true as const, user: result.user }
+    } catch (error) {
+      return {
+        ok: false as const,
+        error: error instanceof Error ? error.message : 'Unable to create user.',
+      }
+    }
+  }, [refresh])
+
+  const adjustAmount = useCallback(async (input: AddAmountInput) => {
+    try {
+      await postAdminTransaction(input)
+      refresh()
+      return { ok: true as const }
+    } catch (error) {
+      return {
+        ok: false as const,
+        error: error instanceof Error ? error.message : 'Unable to post transaction.',
+      }
+    }
+  }, [refresh])
 
   const value = useMemo<AuthContextValue>(
     () => ({
       session,
+      loading,
       login,
       logout,
       refreshKey,
       refresh,
-      getCurrentUser: () => (session ? getUserById(session.userId) : undefined),
-      getCustomerUsers: () => getUsers(),
-      getUserTransactions: (userId) => getTransactionsForUser(userId),
-      getAllTransactionsList: () => getAllTransactions(),
-      getUserActivities: (userId) => getActivitiesForUser(userId),
-      getAllActivitiesList: () => getAllActivities(),
-      createUser: (input) => {
-        const result = addUserStorage(input, session?.username ?? 'admin')
-        if (result.ok && session) {
-          void getClientContext().then((context) =>
-            logUserAction(
-              session,
-              'admin',
-              'Create',
-              `Created Premier account for ${result.user.displayName}`,
-              context,
-            ),
-          )
-          refresh()
-        }
-        return result
-      },
-      adjustAmount: (input) => {
-        const result = addAmountStorage(input, session?.username ?? 'admin')
-        if (result.ok && session) {
-          void getClientContext().then((context) =>
-            logUserAction(
-              session,
-              'transaction',
-              input.type === 'credit' ? 'Credit' : 'Debit',
-              `${input.type === 'credit' ? 'Credited' : 'Debited'} account ${input.userId}`,
-              context,
-            ),
-          )
-          refresh()
-        }
-        return result
-      },
+      createUser,
+      adjustAmount,
     }),
-    [session, login, logout, refreshKey, refresh],
+    [session, loading, login, logout, refreshKey, refresh, createUser, adjustAmount],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

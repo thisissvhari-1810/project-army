@@ -1,4 +1,4 @@
-import { formatCurrency, formatDateTime } from '../../lib/bankingStorage'
+import { formatCurrency, formatDateTime } from '../../lib/format'
 import type { Transaction } from '../../types/banking'
 
 type TransactionTableProps = {
